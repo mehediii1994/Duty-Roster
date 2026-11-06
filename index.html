@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Duty Roster Manager</title>
+<style>
+:root{--bg:#f3f5f9;--cd:#fff;--tx:#1b2433;--mu:#69758c;--bd:#dde2ec;--ac:#1d5fd8}
+.dark{--bg:#0e1420;--cd:#171f2f;--tx:#e6ebf5;--mu:#93a0b8;--bd:#29344a;--ac:#6b99ff}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 "Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+#app{display:flex;min-height:100vh}aside{width:212px;flex:none;background:var(--cd);border-right:1px solid var(--bd);padding:14px 10px;position:sticky;top:0;height:100vh;overflow:auto}
+.lg{font-weight:700;font-size:17px;padding:4px 10px 14px}aside a{display:block;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--mu)}aside a:hover{background:var(--bg)}aside a.on{background:var(--ac);color:#fff}
+main{flex:1;min-width:0;padding:16px 20px}#top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}h2{margin:0;font-size:20px}h3{margin:0 0 8px;font-size:15px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.cd{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:12px}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.g .cd{margin:0}.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.big{font-size:28px;font-weight:700}.mu{color:var(--mu)}
+input,select,button,textarea{font:inherit;color:var(--tx);background:var(--cd);border:1px solid var(--bd);border-radius:8px;padding:7px 10px}button{cursor:pointer}button:hover{border-color:var(--ac)}button.p{background:var(--ac);color:#fff;border-color:var(--ac)}button.d{color:#d33}
+.fr{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;align-items:end}.fr label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mu)}
+table{border-collapse:collapse;width:100%}th,td{border:1px solid var(--bd);padding:5px 8px;text-align:left}th{background:var(--bg);position:sticky;top:0}.sc{overflow:auto;max-height:70vh}
+.chip{display:inline-block;min-width:30px;text-align:center;padding:1px 8px;border-radius:12px;font-weight:600;font-size:12px}
+.cs{width:100%;min-width:62px;font-weight:600;border:0;padding:5px 2px;text-align:center}.ms{outline:2px dashed #e66;outline-offset:-3px}.td td:first-child,.td td:nth-child(2){background:#fff3c4;color:#222}
+.cal td{vertical-align:top;height:92px;width:14.28%}.cal b{font-size:12px;color:var(--mu)}.dc{margin:2px;min-width:38px}.dc.on{background:var(--ac);color:#fff}
+.w{color:#c47a00}.n{color:#d33}.i{color:#888}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:9px 16px;border-radius:8px;opacity:0;pointer-events:none;transition:.2s;z-index:99}#toast.on{opacity:1}
+#pa{display:none}#pa.show{display:block;position:fixed;inset:0;overflow:auto;background:#7b8294;z-index:50;padding:12px}.pbar{position:sticky;top:0;display:flex;gap:8px;padding-bottom:10px}
+.pg{background:#fff;color:#000;max-width:1100px;margin:0 auto 14px;padding:16px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.pg th,.pg td{border:1px solid #888;color:#000;background:#fff}.pg th{background:#e8ebf2}.pg .x{background:#f1f1f1}
+.hd{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:8px}.hd h1{margin:0;font-size:20px}.r{text-align:right}.ei{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:8px}
+.pk{display:inline-block;padding:2px 6px;border-radius:5px;font-weight:700;font-size:13px;margin:2px 0}.pg small{display:block;font-size:10px}.lg2{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0;font-size:12px}.sg{display:flex;justify-content:space-around;margin-top:34px}.sg div{border-top:1px solid #000;width:36%;text-align:center;padding-top:4px}
+.pg table,.pg tr,.pg .hd,.sg{break-inside:avoid}.brk{break-after:page}.pg:not(.brk){margin-bottom:24px}
+@media(max-width:800px){#app{display:block}aside{width:auto;height:auto;position:static;display:flex;overflow:auto;padding:6px}.lg{display:none}aside a{white-space:nowrap}main{padding:10px}}
+@media print{body{background:#fff}#app,.np{display:none!important}#pa.show{position:static;display:block;background:#fff;padding:0;overflow:visible}.pg{margin:0;padding:0;max-width:none}.pg:not(.brk){margin-bottom:14px}}
+</style><style id="ps"></style></head>
+<body><div id="app"><aside id="sb"></aside><main><div id="top"></div><div id="view"></div></main></div><div id="pa"></div><div id="toast"></div>
+<script>
+const K='dutyRoster.v1',$=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const h=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MN=['January','February','March','April','May','June','July','August','September','October','November','December'],DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const T={dash:'Dashboard',emp:'Employee Management',shift:'Shift Management',sch:'Monthly Schedule',bulk:'Bulk Scheduling',rep:'Reports & Analytics',prn:'Print Management',set:'Settings',bak:'Backup & Restore'};
+let S,U=[],R=[],V='dash',Y=2026,M=10,EF='ALL',tm=1,brush='',ED=-1,SD=-1;
+const pad=n=>String(n).padStart(2,'0'),ym=()=>Y+'-'+pad(M+1),dim=(y=Y,m=M)=>new Date(y,m+1,0).getDate(),dw=(d,y=Y,m=M)=>new Date(y,m,d).getDay();
+const E=id=>S.emps.find(e=>e.id===id),SH=c=>S.shifts.find(s=>s.c===c);
+const gs=(id,d,k=ym())=>S.sched[k]?.[id]?.[d]||'';
+function ss(id,d,c,k=ym()){const m=S.sched[k]??={};const e=m[id]??={};if(c)e[d]=c;else delete e[d]}
+function tc(x){const n=parseInt((x||'#ccc').slice(1),16),l=.3*(n>>16)+.59*((n>>8)&255)+.11*(n&255);return l>150?'#111':'#fff'}
+const chip=c=>{const s=SH(c);return c?`<span class=chip style="background:${s?s.col:'#ccc'};color:${s?tc(s.col):'#000'}">${h(c)}</span>`:''};
+const f12=t=>{if(!t)return'';let[a,b]=t.split(':').map(Number);return pad(a%12||12)+':'+pad(b)+(a<12?' AM':' PM')};
+const tl=s=>s&&s.s?`${f12(s.s)} - ${f12(s.e)}${s.e&&s.e<s.s?' (+1)':''}`:'';
+function seed(){const sm='Ev2 W EM EM EM Ev2 Ev2 Ev2 Ev2 Ev2 Ev2 Ev2 EM Ev2 Ev2 EM EM W W W W L Ev2 Ev2 Ev2 Ev2 EM W Ev2 Ev2'.split(' '),o={};sm.forEach((c,i)=>o[i+1]=c);
+return{emps:[{id:'Mehedi-1008',name:'Mehedi',des:'Senior Engineer',dep:'NOC',ph:'',act:true}],
+shifts:[{c:'EM',n:'Early Morning',s:'08:00',e:'17:00',col:'#8fcbf7'},{c:'M',n:'Morning',s:'10:00',e:'19:00',col:'#4fae6c'},{c:'Ev1',n:'Evening 1',s:'12:00',e:'21:00',col:'#f59ac0'},{c:'Ev2',n:'Evening 2',s:'13:00',e:'22:00',col:'#a56cd8'},{c:'N',n:'Night',s:'21:30',e:'08:00',col:'#1d2b57'},{c:'W',n:'Weekend',s:'',e:'',col:'#9aa0a6'},{c:'L',n:'Annual/Sick Leave',s:'',e:'',col:'#f59e0b'},{c:'H',n:'Public Holiday',s:'',e:'',col:'#e53935'},{c:'PS',n:'Physical Support',s:'',e:'',col:'#14a8a0'}],
+sched:{'2026-11':{'Mehedi-1008':o}},company:'My Company',dept:'NOC Department',prep:'',appr:'',dark:false}}
+try{S=JSON.parse(localStorage.getItem(K))}catch(e){}
+if(!S||!S.emps)S=seed();
+function save(q){try{localStorage.setItem(K,JSON.stringify(S));if(!q)toast('Saved')}catch(e){toast('Save failed: '+e.message)}}
+function toast(t){const e=$('#toast');e.textContent=t;e.className='on';clearTimeout(toast.t);toast.t=setTimeout(()=>e.className='',2600)}
+function dl(n,t,m){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:m||'text/plain'}));a.download=n;document.body.appendChild(a);a.click();a.remove()}
+const snap=()=>{U.push(JSON.stringify(S.sched));U.length>60&&U.shift();R=[]};
+function undo(){if(!U.length)return toast('Nothing to undo');R.push(JSON.stringify(S.sched));S.sched=JSON.parse(U.pop());save(1);render()}
+function redo(){if(!R.length)return toast('Nothing to redo');U.push(JSON.stringify(S.sched));S.sched=JSON.parse(R.pop());save(1);render()}
+function issues(){const r=[],n=dim();S.emps.forEach(e=>{let m=0,ms=0;for(let d=1;d<=n;d++){const c=gs(e.id,d);if(!c)ms++;else m++;if(c==='N'&&d<n&&['EM','M'].includes(gs(e.id,d+1)))r.push({t:'n',x:`${e.name}: ${d} তারিখে Night-এর পরদিন ${gs(e.id,d+1)} shift`})}
+if(e.act&&ms)r.push({t:'w',x:`${e.name}: ${ms} দিনের schedule missing`});if(!e.act&&m)r.push({t:'i',x:`${e.name} Inactive, তবুও schedule আছে`})});return r}
+function apply(ids,days,c,keep){const ems=ids.map(E).filter(Boolean);
+if(c&&ems.some(e=>!e.act)&&!confirm('Inactive employee-কে schedule দেওয়া হচ্ছে। চালিয়ে যাবেন?'))return render();
+snap();ems.forEach(e=>days.forEach(d=>{if(keep&&gs(e.id,d))return;ss(e.id,d,c)}));save(1);render();
+if(issues().some(x=>x.t==='n'))toast('Warning: Night shift-এর পরদিন Early/Morning shift আছে')}
+function bulk(ids,gen){if(!ids.length)return toast('Employee select করুন');const ow=$('#ow').checked,ems=ids.map(i=>S.emps[i]);
+if(ems.some(e=>!e.act)&&!confirm('Inactive employee আছে। চালিয়ে যাবেন?'))return;snap();let n=0;
+ems.forEach(e=>{for(let d=1;d<=dim();d++){const c=gen(e,d);if(c===undefined)continue;if(!ow&&gs(e.id,d))continue;ss(e.id,d,c);n++}});save(1);render();toast(n+' cell updated')}
+function cnt(k=ym(),ids){const o={};S.shifts.forEach(s=>o[s.c]=0);Object.entries(S.sched[k]||{}).forEach(([id,m])=>{if(ids&&!ids.includes(id))return;Object.values(m).forEach(c=>{if(o[c]!=null)o[c]++})});return o}
+const opt=(a,sel)=>a.map(([v,l])=>`<option value="${h(v)}" ${v==sel?'selected':''}>${h(l)}</option>`).join('');
+const shO=(sel,blank)=>(blank!=null?`<option value="">${blank}</option>`:'')+opt(S.shifts.map(s=>[s.c,s.c+' – '+s.n]),sel);
+const empO=sel=>opt(S.emps.map((e,i)=>[i,e.name+' ('+e.id+')']),sel);
+const card=(l,v)=>`<div class=cd><div class=mu>${l}</div><div class=big>${v}</div></div>`;
+const DEPS=['NOC','Support','Network'];
+function go(k){V=k;render()}
+function render(){document.body.className=S.dark?'dark':'';
+$('#sb').innerHTML='<div class=lg>Duty Roster</div>'+Object.keys(T).map(k=>`<a class="${k==V?'on':''}" onclick="go('${k}')">${T[k]}</a>`).join('');
+$('#top').innerHTML=`<h2>${T[V]}</h2><div class=bar><select onchange="M=+this.value;render()">${MN.map((m,i)=>`<option value=${i} ${i==M?'selected':''}>${m}</option>`).join('')}</select><input type=number value=${Y} min=1970 max=2100 style="width:80px" onchange="Y=+this.value||Y;render()"><button onclick="undo()">Undo</button><button onclick="redo()">Redo</button><button class=p onclick="save()">Save</button><button onclick="S.dark=!S.dark;save(1);render()">Light/Dark</button></div>`;
+$('#view').innerHTML=VW[V]()}
+const VW={
+dash(){const c=cnt(),off=['W','L','H'],work=Object.entries(c).filter(([k])=>!off.includes(k)).reduce((a,[,v])=>a+v,0),t=new Date(),k0=t.getFullYear()+'-'+pad(t.getMonth()+1),d0=t.getDate();
+let up='';for(let i=1;i<=6;i++){const x=new Date(t.getFullYear(),t.getMonth(),d0+i),kk=x.getFullYear()+'-'+pad(x.getMonth()+1),dd=x.getDate();up+=`<tr><td>${pad(dd)} ${DN[x.getDay()]}</td><td>${S.emps.filter(e=>e.act&&gs(e.id,dd,kk)).map(e=>h(e.name)+' '+chip(gs(e.id,dd,kk))).join(' &nbsp; ')||'–'}</td></tr>`}
+return`<div class=g>${card('Total Employees',S.emps.length)}${card('Working Duties',work)}${card('Weekend',c.W||0)}${card('Leave',c.L||0)}${card('Public Holidays',c.H||0)}</div><div class=cd style="margin-top:12px"><h3>Shift-wise count – ${MN[M]} ${Y}</h3>${S.shifts.map(s=>chip(s.c)+' '+(c[s.c]||0)).join(' &nbsp; ')}</div>
+<div class=g2><div class=cd><h3>Today – ${pad(d0)} ${MN[t.getMonth()]}</h3><table>${S.emps.filter(e=>e.act).map(e=>`<tr><td>${h(e.name)}</td><td>${chip(gs(e.id,d0,k0))||'–'}</td></tr>`).join('')||'<tr><td>No employee</td></tr>'}</table></div><div class=cd><h3>Upcoming</h3><table>${up}</table></div></div>`},
+emp(){const x=ED>=0?S.emps[ED]:{id:'',name:'',des:'',dep:'NOC',ph:'',act:true};
+return`<div class=cd><h3>${ED>=0?'Edit':'Add'} Employee</h3><div class=fr><label>Employee ID<input id=ei value="${h(x.id)}"></label><label>Name<input id=en value="${h(x.name)}"></label><label>Designation<input id=eds value="${h(x.des)}"></label><label>Department<select id=edp>${opt(DEPS.map(d=>[d,d]),x.dep)}</select></label><label>Phone<input id=eph value="${h(x.ph)}"></label><label>Status<select id=eac>${opt([['1','Active'],['0','Inactive']],x.act?'1':'0')}</select></label><button class=p onclick="eSave()">${ED>=0?'Update':'Add'}</button>${ED>=0?'<button onclick="ED=-1;render()">Cancel</button>':''}</div></div>
+<div class=cd><div class=bar style="margin-bottom:8px"><input id=q placeholder="Search…" oninput="flt()"><select id=qd onchange="flt()"><option value="">All departments</option>${DEPS.map(d=>`<option>${d}</option>`).join('')}</select></div><div class=sc><table id=et><tr><th>ID</th><th>Name</th><th>Designation</th><th>Dept</th><th>Phone</th><th>Status</th><th></th></tr>${S.emps.map((e,i)=>`<tr data-t="${h((e.id+e.name+e.des+e.ph).toLowerCase())}" data-d="${e.dep}"><td>${h(e.id)}</td><td>${h(e.name)}</td><td>${h(e.des)}</td><td>${e.dep}</td><td>${h(e.ph)}</td><td>${e.act?'Active':'<span class=n>Inactive</span>'}</td><td style="white-space:nowrap"><button onclick="eView(${i})">Schedule</button> <button onclick="ED=${i};render()">Edit</button> <button class=d onclick="eDel(${i})">Delete</button></td></tr>`).join('')}</table></div></div>`},
+shift(){const x=SD>=0?S.shifts[SD]:{c:'',n:'',s:'',e:'',col:'#4fae6c'};
+return`<div class=cd><h3>${SD>=0?'Edit':'Add'} Shift</h3><div class=fr><label>Code<input id=sc value="${h(x.c)}"></label><label>Name<input id=sn value="${h(x.n)}"></label><label>Start<input id=ss type=time value="${x.s||''}"></label><label>End<input id=se type=time value="${x.e||''}"></label><label>Color<input id=sco type=color value="${x.col}" style="height:34px"></label><button class=p onclick="sSave()">${SD>=0?'Update':'Add'}</button>${SD>=0?'<button onclick="SD=-1;render()">Cancel</button>':''}</div><p class=mu>End time Start-এর আগে হলে Overnight shift ধরা হবে। সময় বা রং বদলালে সব schedule/print-এ স্বয়ংক্রিয়ভাবে বদলায়।</p></div>
+<div class=cd><table><tr><th>Code</th><th>Name</th><th>Time</th><th></th></tr>${S.shifts.map((s,i)=>`<tr><td>${chip(s.c)}</td><td>${h(s.n)}</td><td>${tl(s)||'–'}</td><td><button onclick="SD=${i};render()">Edit</button> <button class=d onclick="sDel(${i})">Delete</button></td></tr>`).join('')}</table></div>`},
+sch(){const n=dim(),one=EF!=='ALL'&&S.emps[EF];
+const is=issues(),bar=`<div class="cd bar"><select onchange="EF=this.value==='ALL'?'ALL':+this.value;render()"><option value=ALL>All employees</option>${empO(EF)}</select><select onchange="brush=this.value"><option value="">Brush: off (dropdown)</option><option value="-" ${brush=='-'?'selected':''}>Brush: clear</option>${opt(S.shifts.map(s=>[s.c,'Brush: '+s.c]),brush)}</select><label><input type=checkbox ${tm?'checked':''} onchange="tm=this.checked?1:0;render()"> Show time</label><button onclick="pr1()">Print…</button><span class=mu>Brush on থাকলে cell-এ click করলেই shift বসবে</span></div>`;
+let b='';
+if(one){const lead=dw(1);b='<table class=cal><tr>'+DN.map(d=>`<th>${d}</th>`).join('')+'</tr><tr>'+'<td></td>'.repeat(lead);for(let d=1;d<=n;d++){b+=cellS(EF,d,true);if((lead+d)%7==0&&d<n)b+='</tr><tr>'}b+='</tr></table>'}
+else b=`<div class=sc><table><tr><th>Date</th><th>Day</th>${S.emps.map(e=>`<th>${h(e.name)}${e.act?'':' (inactive)'}</th>`).join('')}</tr>${Array.from({length:n},(_,i)=>{const d=i+1;return`<tr class="${isT(d)?'td':''}"><td>${pad(d)}</td><td>${DN[dw(d)]}</td>${S.emps.map((e,j)=>cellS(j,d)).join('')}</tr>`}).join('')}</table></div>`;
+return bar+`<div class=cd><h3>Shift Time Guide</h3>${S.shifts.map((s,i)=>`<span style="display:inline-block;margin:3px 16px 3px 0"><input type=color value="${s.col}" title="রং পরিবর্তন করুন" onchange="sCol(${i},this.value)" style="width:26px;height:24px;padding:0;vertical-align:middle"> ${chip(s.c)} ${h(s.n)}: <b>${tl(s)||'—'}</b></span>`).join('')}<div class=mu>রঙের বক্সে ক্লিক করে যেকোনো shift-এর রং বদলান।</div></div><div class=cd>${S.emps.length?b:'Employee যোগ করুন'}</div><div class=cd><h3>Validation</h3>${is.map(x=>`<div class="${x.t}">• ${h(x.x)}</div>`).join('')||'সব ঠিক আছে'}</div>`},
+bulk(){const n=dim();return`<div class=cd><label><input type=checkbox id=ow> Existing schedule Overwrite করার অনুমতি (Auto-fill/Pattern/Copy-র জন্য; বন্ধ থাকলে আগের data অক্ষত থাকে)</label></div>
+<div class=cd><h3>1. Employee select</h3>${S.emps.map((e,i)=>`<label style="margin-right:14px"><input type=checkbox class=be value=${i} ${EF===i?'checked':''}> ${h(e.name)}</label>`).join('')}<button onclick="$$('.be').forEach(x=>x.checked=true)">All</button> <button onclick="$$('.be').forEach(x=>x.checked=false)">None</button></div>
+<div class=cd><h3>2. Selected dates → Shift</h3><div>${Array.from({length:n},(_,i)=>`<button class=dc onclick="this.classList.toggle('on')" data-d=${i+1}>${i+1} ${DN[dw(i+1)]}</button>`).join('')}</div><div class=bar style="margin-top:8px"><select id=wdp>${opt(DN.map((d,i)=>[i,d]),5)}</select><button onclick="$$('.dc').forEach(b=>{if(dw(+b.dataset.d)==$('#wdp').value)b.classList.add('on')})">Select weekday</button><button onclick="$$('.dc').forEach(b=>b.classList.add('on'))">All</button><button onclick="$$('.dc').forEach(b=>b.classList.remove('on'))">None</button><select id=b1>${shO('', '— Clear —')}</select><button class=p onclick="bA()">Assign</button></div></div>
+<div class=cd><h3>3. Date range</h3><div class=bar>From <input id=rf type=number min=1 max=${n} value=1 style="width:70px"> To <input id=rt type=number min=1 max=${n} value=${n} style="width:70px"><select id=b2>${shO('', '— Clear —')}</select><button class=p onclick="bR()">Assign range</button></div></div>
+<div class=cd><h3>4. Weekly pattern</h3><div class=bar>${DN.map((d,i)=>`<label>${d} <select class=wp>${shO('', '–')}</select></label>`).join('')}<button class=p onclick="bW()">Apply to month</button></div></div>
+<div class=cd><h3>5. Rotation template / Auto-fill</h3><div class=bar><input id=rot value="EM,EM,Ev2,Ev2,W" style="width:260px"> From <input id=rs type=number min=1 max=${n} value=1 style="width:70px"> To <input id=re type=number min=1 max=${n} value=${n} style="width:70px"><button class=p onclick="bRot()">Auto-fill</button></div><p class=mu>Codes comma দিয়ে লিখুন; range-এ বারবার ঘুরবে।</p></div>
+<div class=cd><h3>6. Copy & Reset</h3><div class=bar><button onclick="bPrev()">Copy previous month → ${MN[M]}</button><select id=cs>${empO(0)}</select> → <select id=cd2>${empO(S.emps.length>1?1:0)}</select><button onclick="bCopy()">Copy employee schedule</button><button class=d onclick="bReset()">Reset month (selected)</button></div></div>`},
+rep(){return`<div class=cd><div class=bar style="margin-bottom:8px"><button onclick="repCSV()">CSV Export</button><button class=p onclick="repPr()">Print report</button></div><div class=sc>${repT()}</div></div>`},
+prn(){return`<div class=cd><h3>Print options – ${MN[M]} ${Y}</h3><div class=fr><label>Type<select id=ps_s onchange="pr1()"><option value=one>Individual employee</option><option value=all>All employees</option><option value=dept>Department-wise</option><option value=cust>Custom selection</option></select></label><label>Employee<select id=ps_e>${empO(EF==='ALL'?0:EF)}</select></label><label>Department<select id=ps_d>${DEPS.map(d=>`<option>${d}</option>`).join('')}</select></label><label>Orientation<select id=ps_o><option>landscape</option><option>portrait</option></select></label><label>From day<input id=ps_f type=number min=1 value=1></label><label>To day<input id=ps_t type=number value=${dim()}></label></div>
+<div style="margin:8px 0"><label><input type=checkbox id=ps_p checked> Employee প্রতি আলাদা page</label> &nbsp; <label><input type=checkbox id=ps_tm checked> Shift time দেখান</label></div><div id=cu class=mu>Custom: ${S.emps.map((e,i)=>`<label style="margin-right:12px"><input type=checkbox class=pk value=${i}> ${h(e.name)}</label>`).join('')}</div><div class=bar style="margin-top:10px"><button class=p onclick="build(0)">Print Preview</button><button onclick="build(1)">Print / Save as PDF</button></div><p class=mu>Print dialog-এ Destination: "Save as PDF" বেছে নিন।</p></div>`},
+set(){return`<div class=cd><div class=fr><label>Company name<input id=sco1 value="${h(S.company)}"></label><label>Department title<input id=sdp1 value="${h(S.dept)}"></label><label>Prepared By<input id=spr value="${h(S.prep)}"></label><label>Approved By<input id=sap value="${h(S.appr)}"></label><button class=p onclick="setSave()">Save settings</button></div></div>`},
+bak(){return`<div class=cd><h3>JSON</h3><div class=bar><button class=p onclick="dl('duty-roster-backup-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(S,null,1),'application/json')">Export Backup</button><label>Import Backup <input type=file accept=".json" onchange="impJ(this)"></label><button onclick="restPrev()">Restore previous data</button></div></div>
+<div class=cd><h3>CSV (${MN[M]} ${Y})</h3><div class=bar><button onclick="schCSV()">Export Schedule CSV</button><label>Import Schedule CSV <input type=file accept=".csv" onchange="impC(this)"></label></div></div>
+<div class=cd><h3>Danger zone</h3><button class=d onclick="clr()">Clear all data</button></div>`}};
+const isT=d=>{const t=new Date();return t.getFullYear()==Y&&t.getMonth()==M&&t.getDate()==d};
+function cellS(ei,d,cal){const e=S.emps[ei],c=gs(e.id,d),s=SH(c),st=s?`background:${s.col};color:${tc(s.col)}`:'';
+const sel=`<select class=cs style="${st}" onchange="cell(${ei},${d},this.value)"><option value="">–</option>${S.shifts.map(x=>`<option value="${h(x.c)}" ${x.c==c?'selected':''}>${h(x.c)}</option>`).join('')}</select>`;
+return`<td class="${!c&&e.act?'ms':''}" ${cal?'style="height:84px"':'style="padding:0"'} onmousedown="pt(event,${ei},${d})">${cal?`<b>${d}</b> <span class=mu>${DN[dw(d)]}</span>`:''}${sel}${tm&&s&&s.s?`<small>${tl(s)}</small>`:''}</td>`}
+function sCol(i,v){S.shifts[i].col=v;save(1);render()}
+function cell(ei,d,v){apply([S.emps[ei].id],[d],v)}
+function pt(ev,ei,d){if(!brush||ev.target.tagName==='OPTION')return;ev.preventDefault();apply([S.emps[ei].id],[d],brush=='-'?'':brush)}
+function flt(){const q=$('#q').value.toLowerCase(),d=$('#qd').value;$$('#et tr[data-t]').forEach(r=>r.style.display=r.dataset.t.includes(q)&&(!d||r.dataset.d==d)?'':'none')}
+function eSave(){const v=i=>$('#'+i).value.trim(),o={id:v('ei'),name:v('en'),des:v('eds'),dep:$('#edp').value,ph:v('eph'),act:$('#eac').value=='1'};
+if(!o.id||!o.name)return toast('ID এবং Name দিতে হবে');
+if(S.emps.some((e,i)=>e.id.toLowerCase()==o.id.toLowerCase()&&i!=ED))return toast('Employee ID unique হতে হবে');
+if(ED>=0){const old=S.emps[ED].id;if(old!==o.id)Object.values(S.sched).forEach(m=>{if(m[old]){m[o.id]=m[old];delete m[old]}});S.emps[ED]=o}else S.emps.push(o);
+ED=-1;save(1);render();toast('Employee saved')}
+function eDel(i){const e=S.emps[i];if(!confirm(e.name+' এবং তার সব schedule মুছে যাবে। নিশ্চিত?'))return;snap();Object.values(S.sched).forEach(m=>delete m[e.id]);S.emps.splice(i,1);ED=-1;EF='ALL';save(1);render()}
+function eView(i){EF=i;go('sch')}
+function sSave(){const o={c:$('#sc').value.trim(),n:$('#sn').value.trim(),s:$('#ss').value,e:$('#se').value,col:$('#sco').value};
+if(!o.c||!o.n)return toast('Code এবং Name দিতে হবে');if(S.shifts.some((s,i)=>s.c.toLowerCase()==o.c.toLowerCase()&&i!=SD))return toast('Shift code unique হতে হবে');
+if(SD>=0){const old=S.shifts[SD].c;if(old!==o.c)Object.values(S.sched).forEach(m=>Object.values(m).forEach(x=>{for(const d in x)if(x[d]===old)x[d]=o.c}));S.shifts[SD]=o}else S.shifts.push(o);
+SD=-1;save(1);render()}
+function sDel(i){const c=S.shifts[i].c;if(!confirm(c+' shift ও তার সব assignment মুছে যাবে। নিশ্চিত?'))return;snap();Object.values(S.sched).forEach(m=>Object.values(m).forEach(x=>{for(const d in x)if(x[d]===c)delete x[d]}));S.shifts.splice(i,1);SD=-1;save(1);render()}
+const bids=()=>$$('.be:checked').map(x=>+x.value);
+function bA(){const ids=bids().map(i=>S.emps[i].id),ds=$$('.dc.on').map(b=>+b.dataset.d);if(!ids.length||!ds.length)return toast('Employee ও Date select করুন');apply(ids,ds,$('#b1').value)}
+function bR(){const ids=bids().map(i=>S.emps[i].id),f=+$('#rf').value,t=+$('#rt').value;if(!ids.length||!(f>=1&&t>=f&&t<=dim()))return toast('Employee/Range ঠিক করুন');apply(ids,Array.from({length:t-f+1},(_,i)=>f+i),$('#b2').value)}
+function bW(){const p=$$('.wp').map(s=>s.value);bulk(bids(),(e,d)=>p[dw(d)]||undefined)}
+function bRot(){const l=$('#rot').value.split(',').map(x=>x.trim()).filter(x=>!x||SH(x)||x=='-'),f=+$('#rs').value,t=+$('#re').value;if(!l.length||$('#rot').value.split(',').some(x=>x.trim()&&!SH(x.trim())))return toast('Rotation-এ অচেনা shift code আছে');
+bulk(bids(),(e,d)=>d>=f&&d<=t?l[(d-f)%l.length]:undefined)}
+function bPrev(){const pm=M?M-1:11,py=M?Y:Y-1,k=py+'-'+pad(pm+1);bulk(bids(),(e,d)=>d<=dim(py,pm)&&gs(e.id,d,k)?gs(e.id,d,k):undefined)}
+function bCopy(){const a=S.emps[+$('#cs').value],b=+$('#cd2').value;if(a===S.emps[b])return toast('Source ও target আলাদা হতে হবে');bulk([b],(e,d)=>gs(a.id,d)||undefined)}
+function bReset(){const ids=bids();if(!ids.length||!confirm('Selected employee-দের এই মাসের schedule মুছবেন?'))return;snap();ids.forEach(i=>delete (S.sched[ym()]||{})[S.emps[i].id]);save(1);render()}
+function repT(){const cs=S.shifts.map(s=>s.c),tot={};return`<table><tr><th>Employee</th>${cs.map(c=>`<th>${h(c)}</th>`).join('')}<th>Total duty</th></tr>${S.emps.map(e=>{const c=cnt(ym(),[e.id]),w=cs.filter(x=>!['W','L','H'].includes(x)).reduce((a,x)=>a+c[x],0);cs.forEach(x=>tot[x]=(tot[x]||0)+c[x]);return`<tr><td>${h(e.name)} (${h(e.id)})</td>${cs.map(x=>`<td>${c[x]}</td>`).join('')}<td>${w}</td></tr>`}).join('')}<tr><th>Summary</th>${cs.map(x=>`<th>${tot[x]||0}</th>`).join('')}<th>${cs.filter(x=>!['W','L','H'].includes(x)).reduce((a,x)=>a+(tot[x]||0),0)}</th></tr></table>`}
+const csv=r=>r.map(x=>x.map(v=>/[",\n]/.test(v)?'"'+String(v).replace(/"/g,'""')+'"':v).join(',')).join('\n');
+function repCSV(){const cs=S.shifts.map(s=>s.c);dl(`report-${ym()}.csv`,csv([['Employee ID','Name',...cs],...S.emps.map(e=>{const c=cnt(ym(),[e.id]);return[e.id,e.name,...cs.map(x=>c[x])]}) ]),'text/csv')}
+function repPr(){show('landscape',`<section class=pg><div class=hd><div><h1>${h(S.company)}</h1><div>${h(S.dept)}</div></div><div class=r><b>Monthly Report</b><div>${MN[M]} ${Y}</div></div></div>${repT()}${sig()}</section>`)}
+function schCSV(){const n=dim();dl(`schedule-${ym()}.csv`,csv([['Date','Day',...S.emps.map(e=>e.id)],...Array.from({length:n},(_,i)=>[ym()+'-'+pad(i+1),DN[dw(i+1)],...S.emps.map(e=>gs(e.id,i+1))])]),'text/csv')}
+function impC(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const L=r.result.replace(/^\uFEFF/,'').split(/\r?\n/).filter(x=>x.trim()).map(x=>x.split(',').map(v=>v.replace(/^"|"$/g,'').trim())),hd=L[0];snap();let n=0;
+L.slice(1).forEach(row=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(row[0]);if(!m)return;hd.forEach((id,j)=>{if(j<2||!E(id))return;const c=row[j];if(c&&!SH(c))return;ss(id,+m[3],c,m[1]+'-'+m[2]);n++})});save(1);render();toast(n+' cell imported')}catch(e){toast('CSV error: '+e.message)}};r.readAsText(f)}
+function impJ(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.emps)||!Array.isArray(d.shifts)||!d.sched)throw Error('Invalid backup file');if(!confirm('বর্তমান data replace হবে। আগের data "Restore previous"-এ থাকবে।'))return;localStorage.setItem(K+'.prev',JSON.stringify(S));S=d;save(1);render();toast('Backup imported')}catch(e){toast('Import failed: '+e.message)}};r.readAsText(f)}
+function restPrev(){const p=localStorage.getItem(K+'.prev');if(!p)return toast('কোনো previous data নেই');if(!confirm('Previous data restore করবেন?'))return;localStorage.setItem(K+'.prev',JSON.stringify(S));S=JSON.parse(p);save(1);render();toast('Restored')}
+function clr(){if(!confirm('সব data মুছে Sample data-তে ফিরবে। নিশ্চিত?'))return;localStorage.setItem(K+'.prev',JSON.stringify(S));S=seed();U=[];R=[];save(1);render()}
+function setSave(){S.company=$('#sco1').value;S.dept=$('#sdp1').value;S.prep=$('#spr').value;S.appr=$('#sap').value;save()}
+function pr1(){if(V!=='prn'){go('prn')}else{const s=$('#ps_s').value;$('#ps_e').disabled=s!='one';$('#ps_d').disabled=s!='dept';$('#cu').style.opacity=s=='cust'?1:.4}}
+const sig=()=>`<div class=sg><div>Prepared By: ${h(S.prep)}</div><div>Approved By: ${h(S.appr)}</div></div>`;
+function show(ori,html){$('#ps').textContent='@page{size:A4 '+ori+';margin:10mm}';$('#pa').innerHTML='<div class="np pbar"><button class=p onclick="window.print()">Print / Save as PDF</button><button onclick="$(\'#pa\').classList.remove(\'show\')">Close preview</button></div>'+html;$('#pa').classList.add('show')}
+function calT(e,f,t,tmv){const k=ym(),n=dim(),lead=dw(1);let r='<table class=cal><tr>'+DN.map(x=>`<th>${x}</th>`).join('')+'</tr><tr>'+'<td class=x></td>'.repeat(lead);
+for(let d=1;d<=n;d++){const c=gs(e.id,d,k),s=SH(c),ok=d>=f&&d<=t;r+=`<td class="${ok?'':'x'}">`+(ok?`<b>${d}</b>${c?`<div class=pk style="background:${s?s.col:'#ddd'};color:${s?tc(s.col):'#000'}">${h(c)}</div>${tmv&&s&&s.s?`<small>${tl(s)}</small>`:''}`:''}`:'')+'</td>';if((lead+d)%7==0&&d<n)r+='</tr><tr>'}
+const rem=(lead+n)%7;if(rem)r+='<td class=x></td>'.repeat(7-rem);return r+'</tr></table>'}
+function build(doPrint){const o=id=>$('#'+id),sc=o('ps_s').value;let ems;
+if(sc=='one')ems=[S.emps[+o('ps_e').value]];else if(sc=='dept')ems=S.emps.filter(e=>e.act&&e.dep==o('ps_d').value);else if(sc=='cust')ems=$$('.pk:checked').map(x=>S.emps[+x.value]);else ems=S.emps.filter(e=>e.act);
+ems=ems.filter(Boolean);if(!ems.length)return toast('Print করার মতো employee পাওয়া যায়নি');
+const n=dim(),f=Math.max(1,+o('ps_f').value||1),t=Math.min(n,+o('ps_t').value||n),per=o('ps_p').checked,tmv=o('ps_tm').checked;
+const leg=S.shifts.map(s=>`<span><span class=pk style="background:${s.col};color:${tc(s.col)}">${h(s.c)}</span> ${h(s.n)} ${tl(s)}</span>`).join('');
+show(o('ps_o').value,ems.map(e=>`<section class="pg${per?' brk':''}"><div class=hd><div><h1>${h(S.company)}</h1><div>${h(S.dept)}${sc=='dept'?' – '+h(e.dep):''}</div></div><div class=r><b>Duty Roster</b><div>${MN[M]} ${Y}${f>1||t<n?` (${f}–${t})`:''}</div></div></div><div class=ei><span><b>Name:</b> ${h(e.name)}</span><span><b>ID:</b> ${h(e.id)}</span><span><b>Designation:</b> ${h(e.des)}</span><span><b>Department:</b> ${h(e.dep)}</span></div>${calT(e,f,t,tmv)}<div class=lg2>${leg}</div>${sig()}</section>`).join(''));
+if(doPrint)setTimeout(()=>window.print(),150)}
+render();
+</script></body></html>
